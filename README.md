@@ -6,7 +6,7 @@ The main purpose of this project is to learn/get better at:
 - Python
 - Crypto
 - Trading Crypto
-- Pandas
+- Pandas & Numpy
 
 And if i could make some passive income on this (REALLY LOW ODDS OF THAT HAPPENING) i could take my brother out for pizza. 
 
@@ -14,9 +14,16 @@ Why crypto? Because it trades 24/7 and i am not restricted to specific times and
 # TODO!
 
 Pre-requisites
-- [ ] Find Crypto Exchange that has an API.
+- [ x ] Find Crypto Exchange that has an API.
 
 CCXT A JavaScript / Python / PHP library for cryptocurrency trading and e-commerce with support for many bitcoin/ether/altcoin exchange markets and merchant APIs.
 
 - [ ] Choose which Crypto to "trade"
 
+# !!! Disclaimer !!!
+
+This software is for educational purposes only. Do not risk money which you are not ready to lose. USE THE SOFTWARE AT YOUR OWN RISK. I WILL NOT ASSUME RESPONSIBILITY FOR YOUR LOSSES.
+
+NEVER RUN THE SOFTWARE IN LIVE MODE IF YOU'RE NOT 100% SURE OF WHAT YOU ARE DOING. Once again, I will NOT take ANY responsibilities regarding the results of your trades.
+
+As is, the software is obviously not viable, but with some research and a bit of coding, it could become your best ally in automating strategies.
