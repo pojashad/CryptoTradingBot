@@ -3,7 +3,7 @@ Buy low, sell high? That sounds easy right?
 I am an easy subject of my feelings and when shit starts to hit the fan. I make dumb decisions. How about getting rid of my feelings and let a bot do the work for me? 
 
 The main purpose of this project is to learn/get better at:
-- Python, 
+- Python
 - Crypto
 - Trading Crypto
 - Pandas
