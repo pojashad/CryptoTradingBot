@@ -14,7 +14,7 @@ Why crypto? Because it trades 24/7 and i am not restricted to specific times and
 # TODO!
 
 Pre-requisites
-- [ x ] Find Crypto Exchange that has an API.
+- [x] Find Crypto Exchange that has an API.
 
 CCXT A JavaScript / Python / PHP library for cryptocurrency trading and e-commerce with support for many bitcoin/ether/altcoin exchange markets and merchant APIs.
 
