@@ -53,6 +53,14 @@ The price for 3 days have been:
 
 https://www.datacamp.com/community/tutorials/moving-averages-in-pandas
 
+### EMA 
+
+# Trading Strategy
+First we need to do EMA and SMA on our historical data. The one i went with is EMA for 500 samples. We also need to know our buying price - which is the price we are buying at plus the commission of the trade. Binance has a commission of 0.01 % . That means if we buy ETH at 600 dollar the commission is 6 dollar. So the total buying price will be 606 dollars. So when we sell we need to beat the buying price and the commission of the sale.
+
+![SMA](./images/buyAndSell1.png)
+## When to buy?
+ When the price is below the exponential moving average we are potentially in a buy position and when the price is increasing we are going to enter a buy position.
 # !!! Disclaimer !!!
 
 This software is for educational purposes only. Do not risk money which you are not ready to lose. USE THE SOFTWARE AT YOUR OWN RISK. I WILL NOT ASSUME RESPONSIBILITY FOR YOUR LOSSES.

@@ -1,69 +1,47 @@
-import random
-import ccxt
-import json
-import time
+from binance.client import Client
+from binance.websockets import BinanceSocketManager
+from binance.enums import *
+import pickle
 import pandas as pd
-import matplotlib.pyplot as plt
-keysFile = open('keys.json')
+from strategy import Strategy
+import json
+import datetime
+
+strategy = Strategy()
+
+keysFile = open("keys.json")
 keys = json.load(keysFile)
-symbol = 'ETH/BUSD'  # Crypto symbol
-exchange_id = 'binance'
-t_frame = '1m'  # For historical data 1-day timeframe
+api_key = keys["binanceTest"]["apiKey"]
+api_secret = keys["binanceTest"]["secret"]
+symbol = "ETHBUSD"
+client = Client(api_key, api_secret)
+client.API_URL = "https://testnet.binance.vision/api"
 
-# Connect to exchange
-exchange_class = getattr(ccxt, exchange_id)
-exchange = exchange_class({
-        'apiKey': keys[exchange_id]['apiKey'],
-        'secret': keys[exchange_id]['secret'],
-        'timeout': 30000,
-        'enableRateLimit': True,
-})
-
-# Create historical dataframe and fill with historical data
-historicalData = exchange.fetch_ohlcv(symbol, t_frame) ## CSV LIST
-header = ['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']
-historyDf = pd.DataFrame(historicalData, columns=header).set_index('Timestamp')
-historyDf['Symbol'] = symbol
-historyDf.index = historyDf.index/1000
-historyDf['Date'] = pd.to_datetime(historyDf.index, unit='s')
-OHLCVDataFrame = historyDf
-
-# Fill dataframe with latest ticker data
-loop = True
-count = 0
-i=0
-x=list()
-y=list()
-while loop == True:
-    print(exchange.fetch_order_book (symbol))
-    """
-    #Get the latest ticker data for the crypto symbol
-    latestTickerData = exchange.fetch_ticker(symbol)
-    #print(latestTickerData)
-
-    # exchange.fetch_ticker(symbol) contains a lot of data. Get the relevant data
-    latestTimestampEpoch = latestTickerData['timestamp']
-    latestOpen = latestTickerData['open']
-    latestHigh = latestTickerData['high']
-    latestLow = latestTickerData['low']
-    latestClose = latestTickerData['close']
-    latestVolume = float(latestTickerData['info']['volume']) 
-    latestDate = latestTimestampEpoch
-
-    # Fill the relevant data to dataframe 
-    latestOHLCV = [[latestTimestampEpoch, latestOpen, latestHigh,
-                   latestLow, latestClose, latestVolume]] ## CSV LIST
-    tempDataFrame = pd.DataFrame(latestOHLCV,  columns=header).set_index('Timestamp')
-    tempDataFrame['Symbol'] = symbol
-    tempDataFrame.index = tempDataFrame.index/1000
-    tempDataFrame['Date'] = pd.to_datetime(tempDataFrame.index, unit='s')
-    OHLCVDataFrame = pd.concat([OHLCVDataFrame, tempDataFrame])
-    print(OHLCVDataFrame)
-    """
-    
-    time.sleep(1)
-    loop = False
+"""
+def process_message(msg):
+    if msg["e"] == "error":
+        print("Error: ", msg)
+        bm.close()
+        bm.start()
+    else:
+        currentPrice = float(msg["c"])
+        Timestamp = msg["E"]
+        strategy.tick(currentPrice)
 
 
+bm = BinanceSocketManager(client)
+# start any sockets here, i.e a trade socket
+conn_key = bm.start_symbol_ticker_socket(symbol, process_message)
+# then start the socket manager
+bm.start()
+"""
+## BACKTESTING
 
-
+with open ('historicalData.csv', 'rb') as fp:
+    historicalData = pickle.load(fp)
+headers = ['Timestamp', 'Open', 'High', 'Low', 'Close']
+df = pd.DataFrame(historicalData, columns=headers)
+for index, row in df.iterrows():
+    strategy.tick(float(row['Close']))
+    #print(row['Close'])
+print("done")
