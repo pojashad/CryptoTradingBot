@@ -1,10 +1,7 @@
 import datetime
 import json
-from binance.client import Client
-import streamlit as st
-import pandas as pd
 import uuid
-import os
+import pprint
 
 class Trade(object):
     def __init__(self):
@@ -13,72 +10,61 @@ class Trade(object):
         self.profitMargin = 1.01
         self.dollarWallet = 700
         self.cryptoQuantity = 0
+        self.array = []
+        self.pp = pprint.PrettyPrinter(indent=4)
 
     def buy(self, currentPrice):
         print("--Buying--")
-        print(datetime.datetime.now())
         self.buyPrice = currentPrice + currentPrice * self.commission
-        print(
-            "Bought at:  ", currentPrice, "To beat: ", self.buyPrice * self.profitMargin
-        )
         self.cryptoQuantity = (self.dollarWallet * 0.8) / (
             currentPrice + currentPrice * self.commission
         )
         self.cryptoQuantity = round(self.cryptoQuantity, 5)
-        print("Bought ETH: ", self.cryptoQuantity)
-        self.dollarWallet = self.dollarWallet - self.cryptoQuantity * currentPrice
-        print("Wallet: ", self.dollarWallet)
-        
-
-        ## write to file
         buyInfo = {
             "UUID": str(uuid.uuid4()),
-            "timestamp" : datetime.datetime.now().timestamp(),
-            "dateTime" : str(datetime.datetime.now()),
+            "timestamp": datetime.datetime.now().timestamp(),
+            "dateTime": str(datetime.datetime.now()),
             "symbol": "ETHBUSD",
             "buyPrice": self.buyPrice,
+            "sellQuantityAt": self.buyPrice*self.profitMargin,
             "quantity": float(self.cryptoQuantity),
-            "buySignal": "Below EMA200"
+            "buySignal": "Below EMA200",
         }
-        with open('activeOrders.json', 'w') as file:
-            array = []
-            array.append(buyInfo)
-            json.dump(array, file)
-       
+        # write to file
+        self.pp.pprint(buyInfo)
+        with open("activeOrders.json", "w") as file:
+            self.array.append(buyInfo)
+            json.dump(self.array, file)
+        self.dollarWallet = self.dollarWallet - self.cryptoQuantity * currentPrice
+        print("Wallet: ", self.dollarWallet)
 
-
-        """
-    activeOrders.json
-        [{
-            UUID: 3bb2ab84-4b54-11eb-ae93-0242ac130002
-            dateTime: "2020-12-05 08:52:00"
-            buyPrice: row['Close'] + (row['Close']*commission)
-            crypto: (dollarWallet*0.8)/ \
-                       (row['Close'] + (row['Close']*commission))
-        }]
-    """
+        
 
     def sell(self, currentPrice):
-        with open('activeOrders.json', 'r+') as json_file:
+        with open("activeOrders.json", "r+") as json_file:
             activeOrders = json.load(json_file)
-            print(activeOrders)
-        for orders in activeOrders:
-            cryptoQuantity = float(orders['quantity'])
-            print(activeOrders)
+        
+        indexToPop = []
+        for index, orders in enumerate(activeOrders):
+            cryptoQuantity = float(orders["quantity"])
             print("--Selling--")
             print(datetime.datetime.now())
-            sellPrice = currentPrice
+            # sellPrice = currentPrice
             print("Sold at: ", currentPrice)
             # Purchase based on dollarWallet balance = ränta på ränta effekten
             self.dollarWallet = self.dollarWallet + (
-                cryptoQuantity * (currentPrice) - (cryptoQuantity * (currentPrice * self.commission))
+                cryptoQuantity * (currentPrice)
+                - (cryptoQuantity * (currentPrice * self.commission))
             )
             print("Wallet: ", self.dollarWallet)
+            indexToPop.append(index)
+
+        for index in indexToPop:    
+            activeOrders.pop(index)
             
-            
-        
-        
-        
+        with open("activeOrders.json", "w") as file:
+            json.dump(activeOrders, file)
+
         """
     def evaluateSell(price):
         if(activeOrders > 0):
