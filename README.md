@@ -34,7 +34,7 @@ From Investopedia:
 ### SMA
 The simplest form of a moving average, known as a simple moving average (SMA), is calculated by taking the arithmetic mean of a given set of values. In other words, a set of numbers–or prices in the case of financial instruments–are added together and then divided by the number of prices in the set. The formula for calculating the simple moving average of a security is as follows:
 
-![SMA](images/sma.png)
+![SMA](Images/sma.png)
 
 Lets say we have a SMA of 3 days. 
 
