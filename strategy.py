@@ -37,9 +37,7 @@ class Strategy(object):
 
         self.previousPrice = currentPrice
 
-    def getBalance(self):
-            balance = self.client.get_asset_balance(asset='BUSD')
-            return float(balance['free'])
+
 
     # Technical Analysis
     def TA(self, currentPrice):
@@ -74,7 +72,8 @@ class Strategy(object):
                 print(e)
             print(buy)
             print("Bought at current price:" , currentPrice, "bought total of", self.cryptoQuantity , "for with commission:" , self.cryptoQuantity*currentPrice,  "price to beat with profit margin:", self.buyPrice*self.profitMargin)
-            self.dollarWallet = self.getBalance
+            balance = self.client.get_asset_balance(asset='BUSD')
+            self.dollarWallet = float(balance['free'])
             print("Wallet:", self.dollarWallet)
 
     def evaluateSell(self, currentPrice):
