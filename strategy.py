@@ -71,7 +71,7 @@ class Strategy(object):
                 # error handling goes here
                 print(e)
             print(buy)
-            print("Bought at current price:" , currentPrice, "bought total of", self.cryptoQuantity , "for with commission:" , self.cryptoQuantity*currentPrice,  "price to beat with profit margin:", self.buyPrice*self.profitMargin)
+            print("Bought at current price:" , currentPrice, "bought total of", self.cryptoQuantity , "for with commission:" , self.cryptoQuantity*currentPrice,  "price to beat with profit margin:",round(self.buyPrice*self.profitMargin,4))
             balance = self.client.get_asset_balance(asset='BUSD')
             self.dollarWallet = float(balance['free'])
             print("Wallet:", self.dollarWallet)
