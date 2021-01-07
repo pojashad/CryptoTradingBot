@@ -5,17 +5,23 @@ import pickle
 import pandas as pd
 from strategy import Strategy
 import json
+import datetime
 
-strategy = Strategy()
+
 
 keysFile = open("keys.json")
 keys = json.load(keysFile)
-api_key = keys["binanceTest"]["apiKey"]
-api_secret = keys["binanceTest"]["secret"]
+api_key = keys["binance"]["apiKey"]
+api_secret = keys["binance"]["secret"]
 symbol = "ETHBUSD"
 client = Client(api_key, api_secret)
-client.API_URL = "https://testnet.binance.vision/api"
+#client.API_URL = "https://testnet.binance.vision/api"
 
+strategy = Strategy()
+print('-- Status --')
+print(datetime.datetime.now())
+BUSD = client.get_asset_balance(asset='BUSD')
+print('Wallet BUSD: ', BUSD['free'])
 
 def process_message(msg):
     if msg["e"] == "error":
@@ -34,18 +40,11 @@ bm = BinanceSocketManager(client)
 conn_key = bm.start_symbol_ticker_socket(symbol, process_message)
 # then start the socket manager
 bm.start()
-"""
-trt
-    buy = client.create_test_order(symbol='ETHUSDT', side='BUY', type='MARKET', quantity=100)
-except BinanceAPIException as e:
-    # error handling goes here
-    print(e)
-except BinanceOrderException as e:
-    # error handling goes here
-    print(e)
-print(buy)
-"""
 
+
+
+
+"""
 # BACKTESTING
 with open("historicalData.csv", "rb") as fp:
     historicalData = pickle.load(fp)
@@ -55,3 +54,4 @@ for index, row in df.iterrows():
     strategy.tick(float(row["Close"]))
     # print(row['Close'])
 print("done")
+"""
