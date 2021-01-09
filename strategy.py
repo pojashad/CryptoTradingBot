@@ -13,7 +13,7 @@ class Strategy(object):
         self.bought = False
         self.commission = 0.001
         self.buyPrice = 0
-        self.profitMargin = 1.01
+        self.profitMargin = 1.005
         self.priceArray = []
         self.EMA1000 = 0
         self.dollarWallet = 0
