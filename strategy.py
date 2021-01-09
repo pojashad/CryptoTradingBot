@@ -15,7 +15,7 @@ class Strategy(object):
         self.buyPrice = 0
         self.profitMargin = 1.01
         self.priceArray = []
-        self.EMA500 = 0
+        self.EMA1000 = 0
         self.dollarWallet = 0
         self.cryptoQuantity = 0
         self.trades = []
@@ -42,17 +42,17 @@ class Strategy(object):
     # Technical Analysis
     def TA(self, currentPrice):
         self.priceArray.append(currentPrice)
-        # EMA500
-        if len(self.priceArray) > 500:
+        # EMA1000
+        if len(self.priceArray) > 1000:
             self.priceArray.pop(0)
             df_test = pd.DataFrame(self.priceArray, columns=["CurrentPrice"])
-            df_test["EMA500"] = df_test["CurrentPrice"].ewm(span=500).mean()
-            self.EMA500 = df_test.at[len(df_test) - 1, "EMA500"]
+            df_test["EMA1000"] = df_test["CurrentPrice"].ewm(span=1000).mean()
+            self.EMA1000 = df_test.at[len(df_test) - 1, "EMA1000"]
 
     def evaluateBuy(self, currentPrice):
         # When the price is below the moving average we are potentially in a buy position.
         # When the price is increasing we are going to enter a buy poisition.
-        if (currentPrice < self.EMA500 and currentPrice > self.previousPrice and self.cryptoQuantity == 0):
+        if (currentPrice < self.EMA1000 and currentPrice > self.previousPrice and self.cryptoQuantity == 0):
             #self.trade.buy(currentPrice)
             balance = self.client.get_asset_balance(asset='BUSD')
             self.dollarWallet = float(balance['free'])
