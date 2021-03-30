@@ -1,4 +1,4 @@
-mport argparse
+import argparse
 import sys
 import os
 import numpy as np
@@ -155,15 +155,13 @@ maxlen = 90*24  # Only consider the last 90 days, 24 hours
 
 
 #Model
-
 #Variable params
-num_heads = int(net_params['num_heads']) #1  # Number of attention heads
-ff_dim = int(net_params['ff_dim']) #32  # Hidden layer size in feed forward network inside transformer
-num_layers = int(net_params['num_layers']) #1  # Number of attention heads
-batch_size = int(net_params['batch_size']) #32
-num_iterations = int(net_params['num_iterations'])
+num_heads = 1 #int(net_params['num_heads']) #1  # Number of attention heads
+ff_dim = 32 #int(net_params['ff_dim']) #32  # Hidden layer size in feed forward network inside transformer
+num_layers = 1 #int(net_params['num_layers']) #1  # Number of attention heads
+
 #Create model
-model = create_model(maxlen, vocab_size, embed_dim,num_heads, ff_dim,num_layers,num_iterations)
+model = create_model(maxlen, num_heads, ff_dim,num_layers)
 
 #Summary of model
 print(model.summary())
