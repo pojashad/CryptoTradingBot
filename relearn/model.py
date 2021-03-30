@@ -4,9 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import time
-from collections import Counter
-#Preprocessing and evaluation
-from process_data import parse_and_format
+
 
 #Keras
 import tensorflow as tf
@@ -136,9 +134,12 @@ def create_model(maxlen, vocab_size, embed_dim,num_heads, ff_dim,num_layers,num_
 ######################MAIN######################
 args = parser.parse_args()
 
+#Need to initialize at many different time-points 
+#to not get stuck in a pattern (for generalization)
+
 #Get data
 train_data = pd.read_csv(args.train_data[0])
-
+pdb.set_trace()
 #Get parameters
 #variable_params=pd.read_csv(args.variable_params[0])
 #param_combo=args.param_combo[0]
@@ -151,7 +152,7 @@ outdir = args.outdir[0]
 #Params
 #net_params = variable_params.loc[param_combo-1]
 #Fixed params
-maxlen = 90*24  # Only consider the last 90 days, 24 hours
+maxlen = 90*24  # Only consider the last 90 days, 24 hours. Then trade for the next 90 days to maximize outcome
 
 
 #Model
