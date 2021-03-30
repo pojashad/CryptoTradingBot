@@ -27,11 +27,11 @@ import pdb
 parser = argparse.ArgumentParser(description = '''A reinforcement learning algo for crypto trading.''')
 
 parser.add_argument('--train_data', nargs=1, type= str, default=sys.stdin, help = 'Path to training data.')
-parser.add_argument('--variable_params', nargs=1, type= str, default=sys.stdin, help = 'Path to csv with variable params.')
-parser.add_argument('--param_combo', nargs=1, type= int, default=sys.stdin, help = 'Parameter combo.')
-parser.add_argument('--checkpointdir', nargs=1, type= str, default=sys.stdin, help = 'Path to checpoint directory. Include /in end')
-parser.add_argument('--save_model', nargs=1, type= int, default=sys.stdin, help = 'If to save model or not: 1= True, 0 = False')
-parser.add_argument('--checkpoint', nargs=1, type= int, default=sys.stdin, help = 'If to checkpoint or not: 1= True, 0 = False')
+#parser.add_argument('--variable_params', nargs=1, type= str, default=sys.stdin, help = 'Path to csv with variable params.')
+#parser.add_argument('--param_combo', nargs=1, type= int, default=sys.stdin, help = 'Parameter combo.')
+#parser.add_argument('--checkpointdir', nargs=1, type= str, default=sys.stdin, help = 'Path to checpoint directory. Include /in end')
+#parser.add_argument('--save_model', nargs=1, type= int, default=sys.stdin, help = 'If to save model or not: 1= True, 0 = False')
+#parser.add_argument('--checkpoint', nargs=1, type= int, default=sys.stdin, help = 'If to checkpoint or not: 1= True, 0 = False')
 parser.add_argument('--num_epochs', nargs=1, type= int, default=sys.stdin, help = 'Num epochs (int)')
 parser.add_argument('--outdir', nargs=1, type= str, default=sys.stdin, help = 'Path to output directory. Include /in end')
 
@@ -140,17 +140,16 @@ args = parser.parse_args()
 train_data = pd.read_csv(args.train_data[0])
 
 #Get parameters
-variable_params=pd.read_csv(args.variable_params[0])
-param_combo=args.param_combo[0]
-checkpointdir = args.checkpointdir[0]
-save_model = bool(args.save_model[0])
-checkpoint = bool(args.checkpoint[0])
+#variable_params=pd.read_csv(args.variable_params[0])
+#param_combo=args.param_combo[0]
+#checkpointdir = args.checkpointdir[0]
+#save_model = bool(args.save_model[0])
+#checkpoint = bool(args.checkpoint[0])
 num_epochs = args.num_epochs[0]
 outdir = args.outdir[0]
 
 #Params
-net_params = variable_params.loc[param_combo-1]
-test_partition = int(net_params['test_partition'])
+#net_params = variable_params.loc[param_combo-1]
 #Fixed params
 maxlen = 90*24  # Only consider the last 90 days, 24 hours
 
@@ -158,7 +157,6 @@ maxlen = 90*24  # Only consider the last 90 days, 24 hours
 #Model
 
 #Variable params
-embed_dim = int(net_params['embed_dim']) #32  # Embedding size for each token
 num_heads = int(net_params['num_heads']) #1  # Number of attention heads
 ff_dim = int(net_params['ff_dim']) #32  # Hidden layer size in feed forward network inside transformer
 num_layers = int(net_params['num_layers']) #1  # Number of attention heads
