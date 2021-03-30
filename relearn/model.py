@@ -50,9 +50,10 @@ def get_batch(batch_size,movements_high,movements_low,maxlen):
     random_numbers = np.random.choice(len(movements_high)-maxlen,size=(batch_size,),replace=False) #without replacement
 
     # initialize vector for the targets
-    inputs = [np.zeros((batch_size,maxlen))]
+    inputs = np.zeros((batch_size,maxlen))
     targets=np.zeros((batch_size,maxlen))
 
+    pdb.set_trace()
     #Get batch data
     #for i in range(len(random_numbers)): #sample_1444_t1.npy
         
@@ -112,7 +113,7 @@ class DecoderBlock(layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out2 + ffn_output), attn_weights2
 
-def create_model(maxlen, vocab_size, embed_dim,num_heads, ff_dim,num_layers,num_iterations):
+def create_model(maxlen, num_heads, ff_dim,num_layers):
     '''Create the transformer model
     '''
 
@@ -120,16 +121,17 @@ def create_model(maxlen, vocab_size, embed_dim,num_heads, ff_dim,num_layers,num_
     historical_decisions = layers.Input(shape=(maxlen,)) #Input historical trading decisions
 
     #Define the transformer
-    encoder = EncoderBlock(embed_dim+4, num_heads, ff_dim)
-    decoder = DecoderBlock(embed_dim+4, num_heads, ff_dim)
-    #Iterate
-    for i in range(num_iterations):
-        #Encode
-        for j in range(num_layers):
-            x1, enc_attn_weights = encoder(x1,x1,x1) #q,k,v
-        #Decoder
-        for k in range(num_layers):
-            x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
+    encoder = EncoderBlock(16, num_heads, ff_dim)
+    decoder = DecoderBlock(16, num_heads, ff_dim)
+
+    x1 = historical_movement
+    x2 = historical_decisions
+    #Encode
+    for j in range(num_layers):
+        x1, enc_attn_weights = encoder(x1,x1,x1) #q,k,v
+    #Decoder
+    for k in range(num_layers):
+        x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
 
        
     x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
