@@ -42,6 +42,30 @@ parser.add_argument('--outdir', nargs=1, type= str, default=sys.stdin, help = 'P
 #set_session(sess)  # set this TensorFlow session as the default session for Keras
 
 #####FUNCTIONS and CLASSES#####
+def get_batch(batch_size,movements_high,movements_low,maxlen):
+    """
+    Create batch of n inputs and targets dynamically
+    """
+    #Start index
+    random_numbers = np.random.choice(len(movements_high)-maxlen,size=(batch_size,),replace=False) #without replacement
+
+    # initialize vector for the targets
+    inputs = [np.zeros((batch_size,maxlen))]
+    targets=np.zeros((batch_size,maxlen))
+
+    #Get batch data
+    #for i in range(len(random_numbers)): #sample_1444_t1.npy
+        
+
+    return inputs, np.array(targets)
+
+def generate(batch_size, movements_high,movements_low,maxlen):
+    """
+    a generator for batches, so model.fit_generator can be used.
+    """
+    while True:
+        inputs, targets = get_batch(batch_size,movements_high,movements_low,maxlen)
+
 
 class EncoderBlock(layers.Layer):
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
@@ -139,8 +163,11 @@ args = parser.parse_args()
 
 #Get data
 train_data = pd.read_csv(args.train_data[0])
-pdb.set_trace()
+movements_high = train_data.High.values
+movements_low = train_data.Low.values
+
 #Get parameters
+batch_size=32
 #variable_params=pd.read_csv(args.variable_params[0])
 #param_combo=args.param_combo[0]
 #checkpointdir = args.checkpointdir[0]
@@ -166,3 +193,10 @@ model = create_model(maxlen, num_heads, ff_dim,num_layers)
 
 #Summary of model
 print(model.summary())
+
+#Fit
+history = model.fit_generator(generate(batch_size,movements_high,movements_low,maxlen),
+            steps_per_epoch=int(len(train_data)/batch_size*maxlen),
+            epochs=num_epochs,
+        callbacks=callbacks
+    )
