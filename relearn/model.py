@@ -123,12 +123,17 @@ def custom_loss(y_true, y_pred):
     return 1/K.mean(delta)
 
 
-def calc_outcome(buy_sell_remain):
+def calc_outcome(buy_sell_remain,future_movement,i):
     '''Calcualte the outcome from the buy/sell decision
     '''
+    buy_sell_remain
+    outcome = buy_sell_remain*future_movement[i]
+    
+    return outcome
 
 
-def create_model(maxlen, num_heads, ff_dim,num_layers):
+
+def create_model(maxlen, num_heads, ff_dim,num_layers,num_steps):
     '''Create the transformer model
     '''
 
@@ -155,7 +160,7 @@ def create_model(maxlen, num_heads, ff_dim,num_layers):
         x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
         buy_sell_remain = layers.Dense(3, activation="softmax")(x2) #Buy (dim 1)/Sell (dim 2)/Remain (dim 3)
 
-        position = calc_outcome(buy_sell_remain,future_movement)
+        position = calc_outcome(buy_sell_remain,future_movement,i)
 
     #At test time, the model has to be rewritten without the future_movement. Simply take the layer weights.
     model = keras.Model(inputs=[historical_movement, historical_decisions, future_movement], outputs=preds)
@@ -199,7 +204,7 @@ outdir = args.outdir[0]
 #net_params = variable_params.loc[param_combo-1]
 #Fixed params
 maxlen = 90*24  # Only consider the last 90 days, 24 hours. Then trade for the next 90 days to maximize outcome
-
+num_steps = maxlen
 
 #Model
 #Variable params
@@ -208,7 +213,7 @@ ff_dim = 32 #int(net_params['ff_dim']) #32  # Hidden layer size in feed forward 
 num_layers = 1 #int(net_params['num_layers']) #1  # Number of attention heads
 
 #Create model
-model = create_model(maxlen, num_heads, ff_dim,num_layers)
+model = create_model(maxlen, num_heads, ff_dim,num_layers,num_steps)
 
 #Summary of model
 print(model.summary())
