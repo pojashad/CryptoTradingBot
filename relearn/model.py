@@ -119,16 +119,22 @@ def custom_loss(y_true, y_pred):
     '''
     tf.dtypes.cast(y_true, tf.float32)
     tf.dtypes.cast(y_pred, tf.float32)
-    delta = tf.abs(y_true - y_pred)+0.01 #y_true = inital capital
+    delta = tf.maximum(y_pred-y_true,0.01) #y_true = inital capital
     return 1/K.mean(delta)
+
+
+def calc_outcome(buy_sell_remain):
+    '''Calcualte the outcome from the buy/sell decision
+    '''
 
 
 def create_model(maxlen, num_heads, ff_dim,num_layers):
     '''Create the transformer model
     '''
 
-    historical_movement = layers.Input(shape=(maxlen,3)) #Input historical course movement
-    historical_decisions = layers.Input(shape=(maxlen,3)) #Input historical trading decisions
+    historical_movement = layers.Input(shape=(maxlen,3)) #Input historical course movement, money and ownership
+    historical_decisions = layers.Input(shape=(maxlen,3)) #Input historical trading decisions: buy, sell, cost
+    future_movement = layers.Input(shape=(maxlen,3)) #Input future course movement to calculate earnings/loss
 
     #Define the transformer
     encoder = EncoderBlock(3, num_heads, ff_dim)
@@ -136,22 +142,23 @@ def create_model(maxlen, num_heads, ff_dim,num_layers):
 
     x1 = historical_movement
     x2 = historical_decisions
-    #Encode
-    for j in range(num_layers):
-        x1, enc_attn_weights = encoder(x1,x1,x1) #q,k,v
-    #Decoder
-    for k in range(num_layers):
+
+    for i in range(num_steps): #Go through n steps and evaluate the final earnings
+        #Encode
+        for j in range(num_layers):
+            x1, enc_attn_weights = encoder(x1,x1,x1) #q,k,v
+        #Decoder
+        for k in range(num_layers):
+            x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
+
+
         x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
+        buy_sell_remain = layers.Dense(3, activation="softmax")(x2) #Buy (dim 1)/Sell (dim 2)/Remain (dim 3)
 
+        position = calc_outcome(buy_sell_remain,future_movement)
 
-    x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
-    preds = layers.Dense(6, activation="softmax")(x2) #Annotate
-    #preds = layers.Reshape((maxlen,6),name='annotation')(x2)
-    #pred_type = layers.Dense(4, activation="softmax",name='type')(x) #Type of protein
-    #pred_cs = layers.Dense(1, activation="elu", name='pred_cs')(x)
-
-
-    model = keras.Model(inputs=[historical_movement, historical_decisions], outputs=preds)
+    #At test time, the model has to be rewritten without the future_movement. Simply take the layer weights.
+    model = keras.Model(inputs=[historical_movement, historical_decisions, future_movement], outputs=preds)
     #Optimizer
     initial_learning_rate = 0.001
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
