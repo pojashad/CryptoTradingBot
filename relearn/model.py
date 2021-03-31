@@ -126,9 +126,9 @@ def custom_loss(y_true, y_pred):
 def calc_outcome(buy_sell_remain,future_movement,i):
     '''Calcualte the outcome from the buy/sell decision
     '''
-    buy_sell_remain
+    buy_sell_remain = tf.math.argmax(buy_sell_remain,axis=-1)*buy_sell_remain*1.001
     outcome = buy_sell_remain*future_movement[i]
-    
+
     return outcome
 
 
@@ -136,7 +136,7 @@ def calc_outcome(buy_sell_remain,future_movement,i):
 def create_model(maxlen, num_heads, ff_dim,num_layers,num_steps):
     '''Create the transformer model
     '''
-
+    position = layers.Input(shape=(1,)) #Total position (money+stock)
     historical_movement = layers.Input(shape=(maxlen,3)) #Input historical course movement, money and ownership
     historical_decisions = layers.Input(shape=(maxlen,3)) #Input historical trading decisions: buy, sell, cost
     future_movement = layers.Input(shape=(maxlen,3)) #Input future course movement to calculate earnings/loss
@@ -163,7 +163,7 @@ def create_model(maxlen, num_heads, ff_dim,num_layers,num_steps):
         position = calc_outcome(buy_sell_remain,future_movement,i)
 
     #At test time, the model has to be rewritten without the future_movement. Simply take the layer weights.
-    model = keras.Model(inputs=[historical_movement, historical_decisions, future_movement], outputs=preds)
+    model = keras.Model(inputs=[position,historical_movement, historical_decisions, future_movement], outputs=position)
     #Optimizer
     initial_learning_rate = 0.001
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
