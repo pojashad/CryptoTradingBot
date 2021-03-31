@@ -22,7 +22,7 @@ from attention_class import MultiHeadSelfAttention #https://apoorvnandan.github.
 
 import pdb
 #Arguments for argparse module:
-parser = argparse.ArgumentParser(description = '''A reinforcement learning algo for crypto trading.''')
+parser = argparse.ArgumentParser(description = '''A reinforcement learning algo for crypto trading. Runs in tensorflow 2.''')
 
 parser.add_argument('--train_data', nargs=1, type= str, default=sys.stdin, help = 'Path to training data.')
 #parser.add_argument('--variable_params', nargs=1, type= str, default=sys.stdin, help = 'Path to csv with variable params.')
@@ -56,7 +56,7 @@ def get_batch(batch_size,movements_high,movements_low,maxlen):
     pdb.set_trace()
     #Get batch data
     #for i in range(len(random_numbers)): #sample_1444_t1.npy
-        
+
 
     return inputs, np.array(targets)
 
@@ -113,16 +113,26 @@ class DecoderBlock(layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out2 + ffn_output), attn_weights2
 
+
+def custom_loss(y_true, y_pred):
+    '''Keras custom loss function
+    '''
+    tf.dtypes.cast(y_true, tf.float32)
+    tf.dtypes.cast(y_pred, tf.float32)
+    delta = tf.abs(y_true - y_pred)+0.01 #y_true = inital capital
+    return 1/K.mean(delta)
+
+
 def create_model(maxlen, num_heads, ff_dim,num_layers):
     '''Create the transformer model
     '''
 
-    historical_movement = layers.Input(shape=(maxlen,)) #Input historical course movement
-    historical_decisions = layers.Input(shape=(maxlen,)) #Input historical trading decisions
+    historical_movement = layers.Input(shape=(maxlen,3)) #Input historical course movement
+    historical_decisions = layers.Input(shape=(maxlen,3)) #Input historical trading decisions
 
     #Define the transformer
-    encoder = EncoderBlock(16, num_heads, ff_dim)
-    decoder = DecoderBlock(16, num_heads, ff_dim)
+    encoder = EncoderBlock(3, num_heads, ff_dim)
+    decoder = DecoderBlock(3, num_heads, ff_dim)
 
     x1 = historical_movement
     x2 = historical_decisions
@@ -133,7 +143,7 @@ def create_model(maxlen, num_heads, ff_dim,num_layers):
     for k in range(num_layers):
         x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
 
-       
+
     x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
     preds = layers.Dense(6, activation="softmax")(x2) #Annotate
     #preds = layers.Reshape((maxlen,6),name='annotation')(x2)
@@ -160,7 +170,7 @@ def create_model(maxlen, num_heads, ff_dim,num_layers):
 ######################MAIN######################
 args = parser.parse_args()
 
-#Need to initialize at many different time-points 
+#Need to initialize at many different time-points
 #to not get stuck in a pattern (for generalization)
 
 #Get data
