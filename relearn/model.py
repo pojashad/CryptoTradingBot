@@ -114,18 +114,21 @@ class DecoderBlock(layers.Layer):
         return self.layernorm2(out2 + ffn_output), attn_weights2
 
 
-def custom_loss(y_true, y_pred):
+def custom_loss(y_true, y_pred): #y_true are the sought after Sharpe ratios
     '''Keras custom loss function
     '''
     tf.dtypes.cast(y_true, tf.float32)
     tf.dtypes.cast(y_pred, tf.float32)
-    delta = tf.maximum(y_pred-y_true,0.01) #y_true = inital capital
+
+    postion =y_pred[:,-1,1]+y_pred[:,-1,2] #momey + ownership
+    std = tf.keras.backend.std(y_pred[:,:,0]) #std of movement
+    delta = tf.maximum(postion/std,0.01) #y_true = inital capital
 
 
     #https://hackernoon.com/bitcoin-sharpe-ratio-the-risk-and-reward-of-investing-in-cryptocurrencies-i81e3xo8
     #The loss should be the return/std deviation of the return (the std of all historical trade outcomes) 
     #- will be similar to sharpe ratio. Want high return and low risk (std)
-    return 1/K.mean(delta)
+    return tf.keras.backend.mean(delta)
 
 
 def calc_outcome(historical_movement,historical_decisions,future_movement,buy_sell_remain,percentage):
@@ -208,8 +211,10 @@ def create_model(maxlen, num_heads, ff_dim,num_layers,num_steps):
         historical_movement = calc_outcome(historical_movement,historical_decisions,future_movement[i],buy_sell_remain,percentage)
 
 
+    
+
     #At test time, the model has to be rewritten without the future_movement. Simply take the layer weights.
-    model = keras.Model(inputs=[historical_movement, historical_decisions, future_movement], outputs=position)
+    model = keras.Model(inputs=[historical_movement, historical_decisions, future_movement], outputs=historical_movement)
     #Optimizer
     initial_learning_rate = 0.001
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
