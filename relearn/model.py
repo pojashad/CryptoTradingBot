@@ -120,33 +120,56 @@ def custom_loss(y_true, y_pred):
     tf.dtypes.cast(y_true, tf.float32)
     tf.dtypes.cast(y_pred, tf.float32)
     delta = tf.maximum(y_pred-y_true,0.01) #y_true = inital capital
+
+
+    #https://hackernoon.com/bitcoin-sharpe-ratio-the-risk-and-reward-of-investing-in-cryptocurrencies-i81e3xo8
+    #The loss should be the return/std deviation of the return (the std of all historical trade outcomes) 
+    #- will be similar to sharpe ratio. Want high return and low risk (std)
     return 1/K.mean(delta)
 
 
-def calc_outcome(historical_movement,future_movement,buy_sell_remain,percentage):
+def calc_outcome(historical_movement,historical_decisions,future_movement,buy_sell_remain,percentage):
     '''Calcualte the outcome from the buy/sell decision
     '''
     buy_sell_remain = tf.math.argmax(buy_sell_remain,axis=-1)
-    #Will need to iterate through the whole batch and update 
-    #Not sure how to implement the different decisions simultaneously
-    #Buy
-    if buy_sell_remain==0:
-        money_change = historical_movement[:,-1,2]*percentage #last_ownership*buy_percentage
-        money = historical_movement[:,-1,1]-money_change #Money left = last money-last_ownership*buy_percentage
-        ownership = historical_movement[:,-1,2]+money_change #New ownership = last ownership + buy
-    #Sell
-    if buy_sell_remain==1:
-        money_change = historical_movement[:,-1,2]*percentage #last_ownership*sell_percentage
-        money = historical_movement[:,-1,1]+money_change #Money left = last money+last_ownership*sell_percentage
-        ownership = historical_movement[:,-1,2]-money_change  #New ownership = last ownership - sell
+
+    for j in range(batch_size):
+        #Will need to iterate through the whole batch and update 
+        #Not sure how to implement the different decisions simultaneously
+        #Buy
+        if buy_sell_remain==0:
+            money_change = historical_movement[j,-1,2]*percentage #last_ownership*buy_percentage
+            money = historical_movement[j,-1,1]-money_change #Money left = last money-last_ownership*buy_percentage
+            ownership = historical_movement[j,-1,2]+money_change #New ownership = last ownership + buy
+            #Update decisions
+            historical_decisions[j,:-1,:]=historical_decisions[j,1:,:]
+            historical_decisions[j,-1,0]=money_change
+            historical_decisions[j,-1,1]=0
+            historical_decisions[j,-1,2]=money_change*0.001
+
+        #Sell
+        if buy_sell_remain==1:
+            money_change = historical_movement[j,-1,2]*percentage #last_ownership*sell_percentage
+            money = historical_movement[j,-1,1]+money_change #Money left = last money+last_ownership*sell_percentage
+            ownership = historical_movement[j,-1,2]-money_change  #New ownership = last ownership - sell
+            #Update decisions
+            historical_decisions[j,:-1,:]=historical_decisions[j,1:,:]
+            historical_decisions[j,-1,0]=0
+            historical_decisions[j,-1,1]=money_change
+            historical_decisions[j,-1,2]=money_change*0.001
 
 
-    #Update money
-    historical_movement[:,:-1,1] = historical_movement[:,1:,1] 
-    historical_movement[:,-1,1] = money
-    #Update ownership
-    historical_movement[:,:-1,2] = historical_movement[:,1:,2] 
-    historical_movement[:,-1,2] = ownership
+        #Update money
+        historical_movement[j,:-1,1] = historical_movement[j,1:,1] 
+        historical_movement[j,-1,1] = money
+        #Update ownership
+        historical_movement[j,:-1,2] = historical_movement[j,1:,2] 
+        historical_movement[j,-1,2] = ownership
+
+    #Future movement
+    historical_movement[:,:-1,0]=historical_movement[:,1:,0] 
+    historical_movement[:,-1,0]=future_movement
+
 
     return historical_movement
 
@@ -182,7 +205,7 @@ def create_model(maxlen, num_heads, ff_dim,num_layers,num_steps):
         cat = layers.Concatenate()([x2,buy_sell_remain])
         percentage = layers.Dense(1, activation="softmax")(cat)
         #Update the historical movement each step - changing the course movement, money and ownership
-        historical_movement = calc_outcome(historical_movement,future_movement[i],buy_sell_remain,percentage)
+        historical_movement = calc_outcome(historical_movement,historical_decisions,future_movement[i],buy_sell_remain,percentage)
 
 
     #At test time, the model has to be rewritten without the future_movement. Simply take the layer weights.
