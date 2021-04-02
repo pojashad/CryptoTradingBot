@@ -123,20 +123,39 @@ def custom_loss(y_true, y_pred):
     return 1/K.mean(delta)
 
 
-def calc_outcome(buy_sell_remain,future_movement,i):
+def calc_outcome(historical_movement,future_movement,buy_sell_remain,percentage):
     '''Calcualte the outcome from the buy/sell decision
     '''
-    buy_sell_remain = tf.math.argmax(buy_sell_remain,axis=-1)*buy_sell_remain*1.001
-    outcome = buy_sell_remain*future_movement[i]
+    buy_sell_remain = tf.math.argmax(buy_sell_remain,axis=-1)
+    #Will need to iterate through the whole batch and update 
+    #Not sure how to implement the different decisions simultaneously
+    #Buy
+    if buy_sell_remain==0:
+        money_change = historical_movement[:,-1,2]*percentage #last_ownership*buy_percentage
+        money = historical_movement[:,-1,1]-money_change #Money left = last money-last_ownership*buy_percentage
+        ownership = historical_movement[:,-1,2]+money_change #New ownership = last ownership + buy
+    #Sell
+    if buy_sell_remain==1:
+        money_change = historical_movement[:,-1,2]*percentage #last_ownership*sell_percentage
+        money = historical_movement[:,-1,1]+money_change #Money left = last money+last_ownership*sell_percentage
+        ownership = historical_movement[:,-1,2]-money_change  #New ownership = last ownership - sell
 
-    return outcome
+
+    #Update money
+    historical_movement[:,:-1,1] = historical_movement[:,1:,1] 
+    historical_movement[:,-1,1] = money
+    #Update ownership
+    historical_movement[:,:-1,2] = historical_movement[:,1:,2] 
+    historical_movement[:,-1,2] = ownership
+
+    return historical_movement
 
 
 
 def create_model(maxlen, num_heads, ff_dim,num_layers,num_steps):
     '''Create the transformer model
     '''
-    position = layers.Input(shape=(1,)) #Total position (money+stock)
+
     historical_movement = layers.Input(shape=(maxlen,3)) #Input historical course movement, money and ownership
     historical_decisions = layers.Input(shape=(maxlen,3)) #Input historical trading decisions: buy, sell, cost
     future_movement = layers.Input(shape=(maxlen,3)) #Input future course movement to calculate earnings/loss
@@ -145,10 +164,11 @@ def create_model(maxlen, num_heads, ff_dim,num_layers,num_steps):
     encoder = EncoderBlock(3, num_heads, ff_dim)
     decoder = DecoderBlock(3, num_heads, ff_dim)
 
-    x1 = historical_movement
-    x2 = historical_decisions
+    
 
     for i in range(num_steps): #Go through n steps and evaluate the final earnings
+        x1 = historical_movement
+        x2 = historical_decisions
         #Encode
         for j in range(num_layers):
             x1, enc_attn_weights = encoder(x1,x1,x1) #q,k,v
@@ -159,11 +179,14 @@ def create_model(maxlen, num_heads, ff_dim,num_layers,num_steps):
 
         x2, enc_dec_attn_weights = decoder(x2,x1,x1) #q,k,v - the k and v from the encoder goes into he decoder
         buy_sell_remain = layers.Dense(3, activation="softmax")(x2) #Buy (dim 1)/Sell (dim 2)/Remain (dim 3)
+        cat = layers.Concatenate()([x2,buy_sell_remain])
+        percentage = layers.Dense(1, activation="softmax")(cat)
+        #Update the historical movement each step - changing the course movement, money and ownership
+        historical_movement = calc_outcome(historical_movement,future_movement[i],buy_sell_remain,percentage)
 
-        position = calc_outcome(buy_sell_remain,future_movement,i)
 
     #At test time, the model has to be rewritten without the future_movement. Simply take the layer weights.
-    model = keras.Model(inputs=[position,historical_movement, historical_decisions, future_movement], outputs=position)
+    model = keras.Model(inputs=[historical_movement, historical_decisions, future_movement], outputs=position)
     #Optimizer
     initial_learning_rate = 0.001
     lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
