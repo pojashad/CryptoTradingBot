@@ -1,3 +1,5 @@
+###Install requirements first:
+#pip3 install requirements.txt
 
 TRAIN_DATA=../trade_df.csv
 OUTDIR=./
