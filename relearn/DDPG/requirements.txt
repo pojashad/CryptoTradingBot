@@ -1,4 +1,0 @@
-numpy
-tensorflow>=2.4
-tf_agents==0.7.1
-pandas
